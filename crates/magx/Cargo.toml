@@ -1,0 +1,19 @@
+[package]
+name = "magx"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+seq-macro = "0.3.*"
+num = "0.4.0"
+float-cmp = "0.8.0"
+rand = "0.8.3"
+# glm = "0.2.3"
+
+
+[features]
+default = ["coord_right_hand"]
+coord_left_hand = []
+coord_right_hand = []

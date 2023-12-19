@@ -1,0 +1,21 @@
+[package]
+name = "erender"
+version = "0.2.0"
+authors = ["yehuohan <yehuohan@qq.com>"]
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[workspace]
+members = [
+    "crates/magx",
+    "crates/scene",
+    "crates/rasterizer",
+    "crates/viewer",
+]
+
+[dependencies]
+magx = {path = "crates/magx"}
+scene = {path = "crates/scene"}
+rasterizer = {path = "crates/rasterizer"}
+viewer = {path = "crates/viewer"}
