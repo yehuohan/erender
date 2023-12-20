@@ -101,7 +101,7 @@ impl Viewer {
                 .transparent(true)
                 .exit_on_esc(true)
                 .build().unwrap();
-        let mut glyphs = win.load_font("../assets/fonts/FantasqueSansNFM.ttf").unwrap();
+        let mut glyphs = win.load_font("assets/fonts/FantasqueSansMono-Regular.ttf").unwrap();
         let font_size = 13;
         let mut events = Events::new(EventSettings::new().lazy(true));
 

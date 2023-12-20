@@ -7,16 +7,16 @@ use magx::*;
 /// 生成asset路径
 macro_rules! gen_asset {
     (obj, $name: tt) => {
-        std::format!("../assets/objects/standard/{}/{}.obj", $name, $name)
+        std::format!("assets/objects/{}/{}.obj", $name, $name)
     };
     (diffuse, $name: tt) => {
-        std::format!("../assets/objects/standard/{}/{}_diffuse.tga", $name, $name)
+        std::format!("assets/objects/{}/{}_diffuse.tga", $name, $name)
     };
     (specular, $name: tt) => {
-        std::format!("../assets/objects/standard/{}/{}_specular.tga", $name, $name)
+        std::format!("assets/objects/{}/{}_specular.tga", $name, $name)
     };
     (normal, $name: tt) => {
-        std::format!("../assets/objects/standard/{}/{}_normal.tga", $name, $name)
+        std::format!("assets/objects/{}/{}_normal.tga", $name, $name)
     };
 }
 
