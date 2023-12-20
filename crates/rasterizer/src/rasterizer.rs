@@ -65,7 +65,7 @@ pub struct Rasterizer {
     pub sz: (u32, u32),
     /// 视口变换矩阵
     mat_viewport: Mat4,
-    gls: GlslVars,
+    gv: GlslVars,
 }
 
 impl Rasterizer {
@@ -74,14 +74,14 @@ impl Rasterizer {
         Self {
             mat_viewport: viewport(0.0, 0.0, sz.0 as Tyf, sz.1 as Tyf),
             sz,
-            gls: GlslVars::new(sz),
+            gv: GlslVars::new(sz),
         }
     }
 
     /// 返回颜色buffer
     #[inline]
     pub fn get_color(&self) -> &Vec<[u8; 4]> {
-        &self.gls.cbuf
+        &self.gv.cbuf
     }
 
     /// 清除颜色buffer
@@ -90,17 +90,17 @@ impl Rasterizer {
     #[inline]
     pub fn clear_color(&mut self, color: &Vec4) {
         let c = (*color) * 255.0;
-        self.gls.cbuf.fill([c.x as u8, c.y as u8, c.z as u8, c.w as u8]);
+        self.gv.cbuf.fill([c.x as u8, c.y as u8, c.z as u8, c.w as u8]);
     }
 
     #[inline]
     pub fn get_depth(&self) -> &Vec<f32> {
-        &self.gls.zbuf
+        &self.gv.zbuf
     }
 
     #[inline]
     pub fn clear_depth(&mut self) {
-        self.gls.zbuf.fill(f32::MAX);
+        self.gv.zbuf.fill(f32::MAX);
     }
 }
 
@@ -109,7 +109,7 @@ impl IRasterizer for Rasterizer {
     fn set_color(&mut self, i: u32, j: u32, color: &Vec4) {
         if i < self.sz.0 && j < self.sz.1 {
             let c = (*color) * 255.0;
-            self.gls.cbuf[(i + j * self.sz.0) as usize] = [c.x as u8, c.y as u8, c.z as u8, c.w as u8];
+            self.gv.cbuf[(i + j * self.sz.0) as usize] = [c.x as u8, c.y as u8, c.z as u8, c.w as u8];
         }
     }
 }
@@ -117,28 +117,28 @@ impl IRasterizer for Rasterizer {
 impl IGlsl for Rasterizer {
     #[inline]
     fn glsl_vars(&self) -> &GlslVars {
-        &self.gls
+        &self.gv
     }
 
     #[inline]
     fn enable_wire_frame(&mut self, val: bool) {
-        self.gls.en_wire_frame = val;
+        self.gv.en_wire_frame = val;
     }
 
     #[inline]
     fn enable_cull_face(&mut self, val: bool) {
-        self.gls.en_cull_back_face = val;
+        self.gv.en_cull_back_face = val;
     }
 }
 
 impl IPipeline for Rasterizer {
     #[inline]
     fn vertex(&mut self, primitive: &Box<dyn IPrimitive>, pidx: usize) {
-        self.gls.gl_Postion = primitive.vertex(pidx);
+        self.gv.gl_Postion = primitive.vertex(pidx);
     }
 
     fn mapping(&mut self) {
-        let (mut a, mut b, mut c) = self.gls.gl_Postion;
+        let (mut a, mut b, mut c) = self.gv.gl_Postion;
         let aw = a.w;
         let bw = b.w;
         let cw = c.w;
@@ -156,15 +156,15 @@ impl IPipeline for Rasterizer {
         b = self.mat_viewport.mul_vec(&b);
         c = self.mat_viewport.mul_vec(&c);
 
-        self.gls.gl_FragCoord = (a, b, c);
+        self.gv.gl_FragCoord = (a, b, c);
         // 保存值1/w到gl_FragCoord，用于透视逆运算（重心坐标校正）
-        self.gls.gl_FragCoord.0.w = aw;
-        self.gls.gl_FragCoord.1.w = bw;
-        self.gls.gl_FragCoord.2.w = cw;
+        self.gv.gl_FragCoord.0.w = aw;
+        self.gv.gl_FragCoord.1.w = bw;
+        self.gv.gl_FragCoord.2.w = cw;
     }
 
     fn culling(&mut self) -> bool {
-        let (a, b, c) = self.gls.gl_FragCoord;
+        let (a, b, c) = self.gv.gl_FragCoord;
         let a = a.to_vec2().to_vec3(0.0);
         let b = b.to_vec2().to_vec3(0.0);
         let c = c.to_vec2().to_vec3(0.0);
@@ -173,13 +173,13 @@ impl IPipeline for Rasterizer {
         // 在屏幕坐标空间中，摄像头看向的方向即是-z方向，
         // 所以三角形的法向量只需要z方向比较即可
         let normal: Vec3 = (b - a).cross(&(c - a)).normalize();
-        self.gls.gl_FrontFacing = normal.dot(&Vec3::from(0.0, 0.0, 1.0)) > 0.0;
+        self.gv.gl_FrontFacing = normal.dot(&Vec3::from(0.0, 0.0, 1.0)) > 0.0;
 
-        return self.gls.gl_FrontFacing;
+        return self.gv.gl_FrontFacing;
     }
 
     fn rasterization(&mut self) -> Vec<(u32, u32, Vec3)> {
-        let (a, b, c) = self.gls.gl_FragCoord;
+        let (a, b, c) = self.gv.gl_FragCoord;
         let abc = [a.to_vec2(), b.to_vec2(), c.to_vec2()];
 
         // 自动丢弃视口外的像素点，实现裁剪
@@ -227,8 +227,8 @@ impl IPipeline for Rasterizer {
         // 通过zbuffer剃除被遮挡的片段，z值通过重心坐标插值计算；
         // 丢弃 深度值>=当前深度缓冲值 的片段（丢离视点更远的片段）；
         // viewport()计算的z范围为[-1.0, 1.0]。
-        if -1.0 <= z && z <= 1.0 && self.gls.zbuf[i] > z {
-            self.gls.zbuf[i] = z;
+        if -1.0 <= z && z <= 1.0 && self.gv.zbuf[i] > z {
+            self.gv.zbuf[i] = z;
             return true;
         }
         false
