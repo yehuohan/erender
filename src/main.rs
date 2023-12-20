@@ -60,10 +60,14 @@ fn main() {
                 EBuffer::Color(r.get_color())
             } else {
                 EBuffer::Depth(r.get_depth())
-            });
-        u.text(&format!("Cull: {}, Wire: {}, Buffer: {}",
-                r.glsl_vars().en_cull_back_face,
-                r.glsl_vars().en_wire_frame,
-                if buf_color { "color" } else { "depth" }));
+            }
+        );
+        u.text(vec![
+            format!("Rotate[e,d,s,f,w,r]"),
+            format!("Move[a,g]"),
+            format!("Cull[x]: {}", r.glsl_vars().en_cull_back_face),
+            format!("Wire[c]: {}", r.glsl_vars().en_wire_frame),
+            format!("Buffer[v]: {}", if buf_color { "color" } else { "depth" }),
+        ]);
     });
 }

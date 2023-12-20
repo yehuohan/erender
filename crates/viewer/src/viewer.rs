@@ -21,14 +21,14 @@ pub enum EBuffer<'a> {
 
 pub struct Viewer {
     img: RefCell<image::RgbaImage>,
-    txt: RefCell<String>,
+    txt: RefCell<Vec<String>>,
 }
 
 impl Viewer {
     pub fn new(sz: (u32, u32)) -> Self {
         Self {
             img: RefCell::new(image::ImageBuffer::from_pixel(sz.0, sz.1, image::Rgba([0, 0, 0, 0]))),
-            txt: RefCell::new(String::new()),
+            txt: RefCell::new(Vec::<String>::new()),
         }
     }
 
@@ -60,10 +60,9 @@ impl Viewer {
     }
 
     /// 显示文本
-    pub fn text(&self, text: &str) {
+    pub fn text(&self, text: Vec<String>) {
         let mut txt = self.txt.borrow_mut();
-        txt.clear();
-        txt.push_str(text);
+        *txt = text;
     }
 
     /// 保存图片
@@ -116,10 +115,12 @@ impl Viewer {
                 win.draw_2d(&e, |ctx, g, dev| {
                     piston_window::image(&tex, ctx.transform, g);
 
-                    text::Text::new_color([0.0, 0.0, 0.0, 1.0], font_size).draw(
-                        &self.txt.borrow(), &mut glyphs,
-                        &ctx.draw_state, ctx.transform.trans(5.0, 5.0 + (font_size as f64)), g
-                    ).unwrap();
+                    for (k, txt) in self.txt.borrow().iter().enumerate() {
+                        text::Text::new_color([0.0, 0.0, 0.0, 1.0], font_size).draw(
+                            &txt, &mut glyphs,
+                            &ctx.draw_state, ctx.transform.trans(5.0, 20.0 * (k as f64) + 5.0 + (font_size as f64)), g
+                        ).unwrap();
+                    }
                     glyphs.factory.encoder.flush(dev);
                 });
             }
