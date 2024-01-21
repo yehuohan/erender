@@ -10,7 +10,6 @@ seq-macro = "0.3.*"
 num = "0.4.0"
 float-cmp = "0.8.0"
 rand = "0.8.3"
-# glm = "0.2.3"
 
 
 [features]
