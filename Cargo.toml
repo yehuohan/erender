@@ -19,3 +19,5 @@ magx = {path = "crates/magx"}
 scene = {path = "crates/scene"}
 rasterizer = {path = "crates/rasterizer"}
 viewer = {path = "crates/viewer"}
+egui = "0.25.0"
+eframe = "0.25.0"
