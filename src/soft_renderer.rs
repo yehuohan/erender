@@ -31,7 +31,7 @@ impl SoftRenderer {
             scene,
             rasterizer,
             draw_color: true,
-            draw_depth: false,
+            draw_depth: true,
         }
     }
 
@@ -76,14 +76,17 @@ impl eframe::App for SoftRenderer {
         });
 
         // Controller panel
-        egui::SidePanel::left(egui::Id::new("Controller")).show(ctx, |ui| {
-            ui.label(egui::RichText::new("Rotate[e,d,s,f,w,r]"));
-            ui.label(egui::RichText::new("Move[a,g]"));
-            ui.checkbox(&mut self.rasterizer.wire_frame(), egui::RichText::new("Wire[z]"));
-            ui.checkbox(&mut self.rasterizer.cull_face(), egui::RichText::new("Cull[x]"));
-            ui.checkbox(&mut self.draw_color, egui::RichText::new("Color[c]"));
-            ui.checkbox(&mut self.draw_depth, egui::RichText::new("Depth[v]"));
-        });
+        egui::SidePanel::left(egui::Id::new("Controller"))
+            .show_separator_line(false)
+            .resizable(false)
+            .show(ctx, |ui| {
+                ui.label(egui::RichText::new("Rotate[e,d,s,f,w,r]"));
+                ui.label(egui::RichText::new("Move[a,g]"));
+                ui.checkbox(&mut self.rasterizer.wire_frame(), egui::RichText::new("Wire[z]"));
+                ui.checkbox(&mut self.rasterizer.cull_face(), egui::RichText::new("Cull[x]"));
+                ui.checkbox(&mut self.draw_color, egui::RichText::new("Color[c]"));
+                ui.checkbox(&mut self.draw_depth, egui::RichText::new("Depth[v]"));
+            });
 
         egui::CentralPanel::default().show(ctx, |ui| {
             let wid = self.rasterizer.sz.0 as usize;
@@ -110,7 +113,11 @@ impl eframe::App for SoftRenderer {
                     let mut pixels = vec![egui::Color32::BLACK; wid * hei];
                     for x in 0..wid {
                         for y in 0..hei {
-                            let p = buf[x + (hei - (y + 1)) * wid];
+                            let mut p = buf[x + (hei - (y + 1)) * wid];
+                            // Make depth more visual
+                            if p < 1.0 {
+                                p = p.ln_1p();
+                            }
                             pixels[x + y * wid] = egui::Color32::from_gray((p * 255.0) as u8);
                         }
                     }
@@ -127,7 +134,9 @@ impl eframe::App for SoftRenderer {
 
 pub fn run(sz: (u32, u32)) -> eframe::Result<()> {
     let options = eframe::NativeOptions {
-        viewport: egui::ViewportBuilder::default(),
+        viewport: egui::ViewportBuilder::default()
+            .with_inner_size([sz.0 as f32 * 2.0 + 195.0, sz.1 as f32 + 15.0])
+            .with_resizable(false),
         ..Default::default()
     };
 
