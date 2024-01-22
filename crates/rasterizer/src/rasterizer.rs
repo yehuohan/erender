@@ -100,7 +100,7 @@ impl Rasterizer {
 
     #[inline]
     pub fn clear_depth(&mut self) {
-        self.gv.zbuf.fill(f32::MAX);
+        self.gv.zbuf.fill(1.0);
     }
 }
 

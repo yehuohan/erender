@@ -42,7 +42,7 @@ impl GlslVars {
             gl_FrontFacing: true,
             gl_FragCoord: (Vec4::new(), Vec4::new(), Vec4::new()),
             cbuf: vec![[0; 4]; max],
-            zbuf: vec![f32::MAX; max],
+            zbuf: vec![1.0; max],
             en_wire_frame: true,
             en_cull_back_face: true,
         }
