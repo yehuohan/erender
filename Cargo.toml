@@ -11,14 +11,12 @@ members = [
     "crates/magx",
     "crates/scene",
     "crates/rasterizer",
-    "crates/viewer",
 ]
 
 [dependencies]
 magx = {path = "crates/magx"}
 scene = {path = "crates/scene"}
 rasterizer = {path = "crates/rasterizer"}
-viewer = {path = "crates/viewer"}
 egui = "0.25.0"
 eframe = "0.25.0"
 image = "0.23.12"
