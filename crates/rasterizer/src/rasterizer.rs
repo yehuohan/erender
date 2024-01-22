@@ -246,11 +246,9 @@ impl IPipeline for Rasterizer {
 }
 
 
-
 #[test]
 fn rasterizer_test() {
     use magx::*;
-    use viewer::{Viewer, EBuffer};
 
     struct R {
         sz: (u32, u32),
@@ -260,7 +258,10 @@ fn rasterizer_test() {
     impl R {
         pub fn new(sz: (u32, u32)) -> Self {
             let max = (sz.0 * sz.1) as usize;
-            Self { sz, cbuf: vec![[0; 4]; max] }
+            Self {
+                sz,
+                cbuf: vec![[0; 4]; max],
+            }
         }
 
         pub fn get_color(&self) -> &Vec<[u8; 4]> {
@@ -278,7 +279,9 @@ fn rasterizer_test() {
         }
     }
 
-    let mut r = R::new((640, 480));
+    let wid = 640;
+    let hei = 480;
+    let mut r = R::new((wid, hei));
     let a = Vec2::from(10.0, 10.0);
     let b = Vec2::from(50.0, 460.0);
     let c = Vec2::from(630.0, 430.0);
@@ -292,7 +295,12 @@ fn rasterizer_test() {
     r.line(&[b, c], colors[1]);
     r.triangle(&[a, c, d], &colors);
 
-    let u = Viewer::new((640, 480));
-    u.swap(r.sz, EBuffer::Color(r.get_color()));
-    u.disp();
+    let buf = r.get_color();
+    let mut img = image::ImageBuffer::from_pixel(wid, hei, image::Rgba([0, 0, 0, 0]));
+    for x in 0..wid {
+        for y in 0..hei {
+            img.put_pixel(x, hei - (y + 1), image::Rgba(buf[(x + y * wid) as usize]));
+        }
+    }
+    img.save("../../test_rasterizer_color.tga").unwrap();
 }

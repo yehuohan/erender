@@ -7,4 +7,4 @@ edition = "2021"
 
 [dependencies]
 magx = {path = "../magx"}
-viewer = {path = "../viewer"}
+image = "0.23.12"
