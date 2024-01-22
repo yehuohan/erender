@@ -1,6 +1,7 @@
 //! Pure software renderer
 
 use eframe::egui;
+use image;
 use magx::*;
 use rasterizer::rasterizer::Rasterizer;
 use rasterizer::shader::IGlsl;
@@ -35,6 +36,31 @@ impl SoftRenderer {
         }
     }
 
+    fn save(&self) {
+        let wid = self.rasterizer.sz.0;
+        let hei = self.rasterizer.sz.1;
+        let mut img = image::ImageBuffer::from_pixel(wid, hei, image::Rgba([0, 0, 0, 0]));
+        {
+            let buf = self.rasterizer.get_color();
+            for x in 0..wid {
+                for y in 0..hei {
+                    img.put_pixel(x, hei - (y + 1), image::Rgba(buf[(x + y * wid) as usize]));
+                }
+            }
+            img.save("soft_renderer_color.tga").unwrap();
+        }
+        {
+            let buf = self.rasterizer.get_depth();
+            for x in 0..wid {
+                for y in 0..hei {
+                    let c = (buf[(x + y * wid) as usize] * 255.0) as u8;
+                    img.put_pixel(x, hei - (y + 1), image::Rgba([c, c, c, 255]));
+                }
+            }
+            img.save("soft_renderer_depth.tga").unwrap();
+        }
+    }
+
     fn handle_keys(&mut self, key: &egui::Key, pressed: &bool, modifiers: &egui::Modifiers) {
         let en_cull_back_face = self.rasterizer.glsl_vars().en_cull_back_face;
         let en_wire_frame = self.rasterizer.glsl_vars().en_wire_frame;
@@ -54,6 +80,9 @@ impl SoftRenderer {
                 egui::Key::V => self.draw_depth = !self.draw_depth,
                 _ => {}
             }
+        }
+        if *pressed && egui::Key::S == *key && modifiers.command_only() {
+            self.save();
         }
         if !pressed && egui::Key::Escape == *key {
             std::process::exit(0);
@@ -86,6 +115,9 @@ impl eframe::App for SoftRenderer {
                 ui.checkbox(&mut self.rasterizer.cull_face(), egui::RichText::new("Cull[x]"));
                 ui.checkbox(&mut self.draw_color, egui::RichText::new("Color[c]"));
                 ui.checkbox(&mut self.draw_depth, egui::RichText::new("Depth[v]"));
+                if ui.button("Save[^s]").clicked() {
+                    SoftRenderer::save(self);
+                };
             });
 
         egui::CentralPanel::default().show(ctx, |ui| {
@@ -159,6 +191,7 @@ pub fn run(sz: (u32, u32)) -> eframe::Result<()> {
         cc.egui_ctx.set_fonts(fonts);
         cc.egui_ctx.style_mut(|style| {
             style.spacing.item_spacing = egui::vec2(10.0, 10.0);
+            style.spacing.button_padding.x = 15.0;
             if let Some(fondid) = style.text_styles.get_mut(&egui::TextStyle::Body) {
                 *fondid = egui::FontId::new(16.0, egui::FontFamily::Monospace);
             }
