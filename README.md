@@ -1,7 +1,7 @@
 
 Learning graphics renderer with Rust.
 
-![Render](./render.apng)
+![erender](./erender.apng)
 
 
 ***Refs:***
