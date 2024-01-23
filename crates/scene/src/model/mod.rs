@@ -10,6 +10,7 @@ use crate::scene::SceneComponentsRef;
 use magx::*;
 use rasterizer::{pipeline::IPrimitive, shader::UniformMatrix};
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::rc::Rc;
 
 /// 场景模型需要的uniform变量
@@ -36,7 +37,7 @@ pub struct Model {
     /// model中的所有mesh
     ///
     /// 使用`dyn trait`可以让不同的IPrimitive放到一个数组中，方便遍历。
-    pub meshes: Vec<Box<dyn IPrimitive>>,
+    pub meshes: HashMap<&'static str, Box<dyn IPrimitive>>,
     /// model需要使用uniform变量
     pub uniforms: ModelUniformVarsRef,
 }
@@ -61,21 +62,24 @@ macro_rules! load_mesh {
 
 impl Model {
     pub fn new(comps: SceneComponentsRef) -> Self {
-        let mut meshes: Vec<Box<dyn IPrimitive>> = Vec::new();
+        let mut meshes: HashMap<&str, Box<dyn IPrimitive>> = HashMap::new();
         let uniforms = ModelUniformVars::new(comps);
 
-        // meshes.push(Box::new(load_mesh!(standard, "african_head", uniforms)));
-        // meshes.push(Box::new(load_mesh!(standard, "african_head_eye_inner", uniforms)));
-        // meshes.push(Box::new(load_mesh!(standard, "diablo3_pose", uniforms)));
-        meshes.push(Box::new(load_mesh!(lite, "floor", uniforms)));
-        // meshes.push(Box::new(load_mesh!(debug, "sphere", uniforms)));
+        meshes.insert("african_head", Box::new(load_mesh!(standard, "african_head", uniforms)));
+        meshes.insert(
+            "african_head_eye",
+            Box::new(load_mesh!(standard, "african_head_eye_inner", uniforms)),
+        );
+        meshes.insert("diablo3", Box::new(load_mesh!(standard, "diablo3_pose", uniforms)));
+        meshes.insert("floor", Box::new(load_mesh!(lite, "floor", uniforms)));
+        meshes.insert("sphere", Box::new(load_mesh!(debug, "sphere", uniforms)));
 
-        // meshes.push(Box::new(load_mesh!(standard, "spot", uniforms)));
-        // meshes.push(Box::new(load_mesh!(lite, "spot", uniforms)));
-        // meshes.push(Box::new(load_mesh!(debug, "spot", uniforms)));
+        meshes.insert("spot", Box::new(load_mesh!(standard, "spot", uniforms)));
+        meshes.insert("spot_lite", Box::new(load_mesh!(lite, "spot", uniforms)));
+        meshes.insert("spot_debug", Box::new(load_mesh!(debug, "spot", uniforms)));
 
-        // meshes.push(Box::new(load_mesh!(cube)));
-        meshes.push(Box::new(load_mesh!(frustum)));
+        meshes.insert("cube", Box::new(load_mesh!(cube)));
+        meshes.insert("frustum", Box::new(load_mesh!(frustum)));
 
         Self { meshes, uniforms }
     }
@@ -97,8 +101,8 @@ impl Model {
         u.mat.calc_mit();
         u.mat.calc_mvp();
 
-        for p in &mut self.meshes {
-            p.set_uniforms(Box::new(u.mat))
+        for (_, mesh) in &mut self.meshes {
+            mesh.set_uniforms(Box::new(u.mat))
         }
     }
 }

@@ -4,6 +4,7 @@ use crate::model::{Model, ModelLight};
 use magx::*;
 use rasterizer::{pipeline::IPipeline, rasterizer::Rasterizer};
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::rc::Rc;
 
 /// 背景颜色
@@ -63,16 +64,32 @@ impl Scene {
         }
     }
 
-    /// 更新场景数据
-    pub fn update(&mut self, r: &mut Rasterizer) {
+    /// 获取所有mesh列表
+    pub fn get_meshes(&self) -> Vec<&'static str> {
+        let mut meshes: Vec<&str> = Vec::new();
+        for (name, _) in &self.model.meshes {
+            meshes.push(name);
+        }
+        meshes.sort();
+        return meshes;
+    }
+
+    /// 更新场景
+    ///
+    /// - meshes: 需要更新的mesh列表
+    pub fn update(&mut self, r: &mut Rasterizer, meshes: &HashMap<&'static str, bool>) {
         self.model.update();
         self.model_light
             .update(&self.comps.borrow().camera, &self.comps.borrow().light);
 
         r.clear_color(&COLOR_BG);
         r.clear_depth();
-        for p in &self.model.meshes {
-            r.draw(&p);
+        for (name, visible) in meshes {
+            if *visible {
+                if let Some(mesh) = self.model.meshes.get(name) {
+                    r.draw(mesh);
+                }
+            }
         }
         r.draw(&self.model_light.cube);
     }
