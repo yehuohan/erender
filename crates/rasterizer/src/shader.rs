@@ -1,8 +1,7 @@
 //! Shader Language
 
-use std::any::Any;
 use magx::*;
-
+use std::any::Any;
 
 pub trait IGlsl {
     fn glsl_vars(&self) -> &GlslVars;
@@ -52,7 +51,7 @@ impl GlslVars {
 /// 着色器接口
 pub trait IShader {
     /// 设置uniform变量
-    fn set_uniforms(&mut self, _u: Box<dyn Any>) { }
+    fn set_uniforms(&mut self, _u: Box<dyn Any>) {}
 
     /// 顶点着色器
     ///

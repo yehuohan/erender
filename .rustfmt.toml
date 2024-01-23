@@ -9,5 +9,6 @@ hard_tabs = false
 newline_style = "Unix" # "Auto", "Native", "Unix", "Windows"
 max_width = 128
 format_strings = false
-format_macro_bodies = false
+format_macro_matchers = true
+format_macro_bodies = true
 # ignore = [ ]

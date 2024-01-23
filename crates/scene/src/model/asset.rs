@@ -1,21 +1,20 @@
-use std::{error, fs, io, io::BufRead};
-use std::fmt::{Display, Formatter};
 use image::RgbaImage;
 use magx::*;
-
+use std::fmt::{Display, Formatter};
+use std::{error, fs, io, io::BufRead};
 
 /// 生成asset路径
 macro_rules! gen_asset {
-    (obj, $name: tt) => {
+    (obj, $name:tt) => {
         std::format!("assets/objects/{}/{}.obj", $name, $name)
     };
-    (diffuse, $name: tt) => {
+    (diffuse, $name:tt) => {
         std::format!("assets/objects/{}/{}_diffuse.tga", $name, $name)
     };
-    (specular, $name: tt) => {
+    (specular, $name:tt) => {
         std::format!("assets/objects/{}/{}_specular.tga", $name, $name)
     };
-    (normal, $name: tt) => {
+    (normal, $name:tt) => {
         std::format!("assets/objects/{}/{}_normal.tga", $name, $name)
     };
 }
@@ -27,7 +26,7 @@ pub struct FaceAttrIdx(pub usize, pub usize, pub usize);
 /// 三角面的顶点索引数据
 #[derive(Debug, Copy, Clone)]
 pub struct FaceIdx {
-    pub v: FaceAttrIdx, // vertex index
+    pub v: FaceAttrIdx,  // vertex index
     pub vt: FaceAttrIdx, // texcoord index
     pub vn: FaceAttrIdx, // normal index
 }
@@ -66,32 +65,36 @@ impl Obj {
             if let Ok(line) = item {
                 if line.starts_with("v ") {
                     // 解析vetices
-                    let v: Vec<Tyf> = line.strip_prefix("v ").unwrap()
+                    let v: Vec<Tyf> = line
+                        .strip_prefix("v ")
+                        .unwrap()
                         .split_whitespace()
                         .map(|x| x.parse::<Tyf>().unwrap())
                         .collect();
                     pos.push(Vec3::from(v[0], v[1], v[2])); // 变换时需要使用齐次坐标，w=1.0
-
                 } else if line.starts_with("vt ") {
                     // 解析texture coordinates
-                    let v: Vec<Tyf> = line.strip_prefix("vt ").unwrap()
+                    let v: Vec<Tyf> = line
+                        .strip_prefix("vt ")
+                        .unwrap()
                         .split_whitespace()
                         .map(|x| x.parse::<Tyf>().unwrap())
                         .collect();
-                    tex.push(Vec3::from(v[0], v[1],
-                            if v.len() >= 3 { v[2] } else { 0.0 }));
-
+                    tex.push(Vec3::from(v[0], v[1], if v.len() >= 3 { v[2] } else { 0.0 }));
                 } else if line.starts_with("vn ") {
                     // 解析normals
-                    let v: Vec<Tyf> = line.strip_prefix("vn ").unwrap()
+                    let v: Vec<Tyf> = line
+                        .strip_prefix("vn ")
+                        .unwrap()
                         .split_whitespace()
                         .map(|x| x.parse::<Tyf>().unwrap())
                         .collect();
                     nm.push(Vec3::from(v[0], v[1], v[2]));
-
                 } else if line.starts_with("f ") {
                     // 解析faces
-                    let v: Vec<(usize, usize, usize)> = line.strip_prefix("f ").unwrap()
+                    let v: Vec<(usize, usize, usize)> = line
+                        .strip_prefix("f ")
+                        .unwrap()
                         .split_whitespace()
                         .map(|x| {
                             let mut index = x.split('/');
@@ -99,7 +102,8 @@ impl Obj {
                             let vb = index.next().unwrap().parse::<usize>().unwrap() - 1;
                             let vc = index.next().unwrap().parse::<usize>().unwrap() - 1;
                             (va, vb, vc)
-                        }).collect();
+                        })
+                        .collect();
                     faces.push(FaceIdx::new(
                         FaceAttrIdx(v[0].0, v[1].0, v[2].0),
                         FaceAttrIdx(v[0].1, v[1].1, v[2].1),
@@ -113,16 +117,21 @@ impl Obj {
             f: faces,
             v: pos,
             vt: tex,
-            vn: nm
+            vn: nm,
         })
     }
 }
 
 impl Display for Obj {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f,
+        write!(
+            f,
             "{{faces: {}, vertices: {}, texcoords: {}, normals: {}}}",
-            self.f.len(), self.v.len(), self.vt.len(), self.vn.len())
+            self.f.len(),
+            self.v.len(),
+            self.vt.len(),
+            self.vn.len()
+        )
     }
 }
 
@@ -135,7 +144,7 @@ impl Tex {
     /// 贴图需要翻转y轴，以左下角为坐标原点，且转成RGBA格式。
     pub fn new(filename: &str) -> Self {
         if let Ok(img) = image::open(&filename) {
-            Self(Some( img.flipv().to_rgba8() ))
+            Self(Some(img.flipv().to_rgba8()))
         } else {
             Self(None)
         }
@@ -167,7 +176,8 @@ impl Tex {
                 (c[0] as Tyf) / 255.0,
                 (c[1] as Tyf) / 255.0,
                 (c[2] as Tyf) / 255.0,
-                (c[3] as Tyf) / 255.0))
+                (c[3] as Tyf) / 255.0,
+            ))
         } else {
             None
         }
@@ -181,9 +191,10 @@ impl Tex {
             let c = img.get_pixel(x, y);
             // RGB[0, 255] 转 法向量[-1.0, 1.0]
             Some(Vec3::from(
-                (c[0] as Tyf / 255.0) * 2.0  - 1.0,
-                (c[1] as Tyf / 255.0) * 2.0  - 1.0,
-                (c[2] as Tyf / 255.0) * 2.0  - 1.0))
+                (c[0] as Tyf / 255.0) * 2.0 - 1.0,
+                (c[1] as Tyf / 255.0) * 2.0 - 1.0,
+                (c[2] as Tyf / 255.0) * 2.0 - 1.0,
+            ))
         } else {
             None
         }
@@ -192,7 +203,7 @@ impl Tex {
     /// 计算切线空间的法线纹理（tangent-space normal map）
     ///
     /// - n: 顶点在世界坐标空间的法线向量
-    pub fn t_vec(&self, u:Tyf, v:Tyf, n: &Vec3) -> Option<Vec3> {
+    pub fn t_vec(&self, u: Tyf, v: Tyf, n: &Vec3) -> Option<Vec3> {
         if let Some(ref img) = self.0 {
             // 计算世界坐标系下的切线空间，即T(tangent), B(bi-tangent), N(normal)矩阵：
             //             | Tx, Bx, Nx |
@@ -252,18 +263,16 @@ impl Mtl {
         let diff = Tex::new(&gen_asset!(diffuse, name));
         let spec = Tex::new(&gen_asset!(specular, name));
         let norm = Tex::new(&gen_asset!(normal, name));
-        Self {
-            diff,
-            spec,
-            norm,
-        }
+        Self { diff, spec, norm }
     }
 }
 
 impl Display for Mtl {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f,
+        write!(
+            f,
             "{{diffuse: {}, specular: {}, normal: {}}}",
-            self.diff, self.spec, self.norm)
+            self.diff, self.spec, self.norm
+        )
     }
 }

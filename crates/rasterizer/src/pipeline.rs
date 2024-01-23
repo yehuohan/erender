@@ -1,10 +1,9 @@
 //! Graphics Pipeline
 
-use std::ops::Range;
-use magx::*;
 use crate::rasterizer::IRasterizer;
-use crate::shader::{IShader, IGlsl};
-
+use crate::shader::{IGlsl, IShader};
+use magx::*;
+use std::ops::Range;
 
 /// 图元接口
 ///
@@ -51,7 +50,6 @@ pub trait IPipeline: IRasterizer + IGlsl {
     /// - z: 深度值
     fn test_depth(&mut self, i: usize, z: f32) -> bool;
 
-
     /// 绘制模型
     fn draw(&mut self, primitive: &Box<dyn IPrimitive>) {
         if self.glsl_vars().en_wire_frame {
@@ -66,9 +64,7 @@ pub trait IPipeline: IRasterizer + IGlsl {
         for pidx in primitive.indices() {
             self.vertex(primitive, pidx);
             self.mapping();
-            if (!self.glsl_vars().en_cull_back_face)
-                || (self.glsl_vars().en_cull_back_face && self.culling())
-            {
+            if (!self.glsl_vars().en_cull_back_face) || (self.glsl_vars().en_cull_back_face && self.culling()) {
                 let pixels = self.rasterization();
                 self.fragment(primitive, pidx, &pixels);
             }
@@ -84,9 +80,7 @@ pub trait IPipeline: IRasterizer + IGlsl {
             self.mapping();
             let culling = self.culling();
             let color = if culling { fg } else { bg };
-            if (!self.glsl_vars().en_cull_back_face)
-                || (self.glsl_vars().en_cull_back_face && culling)
-            {
+            if (!self.glsl_vars().en_cull_back_face) || (self.glsl_vars().en_cull_back_face && culling) {
                 let (a, b, c) = self.glsl_vars().gl_FragCoord;
                 let a = a.to_vec2();
                 let b = b.to_vec2();

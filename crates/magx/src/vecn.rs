@@ -2,28 +2,19 @@
 
 #![allow(dead_code)]
 
-use std::ops::{
-    Add, AddAssign,
-    Sub, SubAssign,
-    Mul, MulAssign,
-    Div, DivAssign,
-    Neg,
-    Index, IndexMut,
-};
-use std::fmt::{Display, Formatter};
-use float_cmp::ApproxEq;
-use rand::distributions::{Standard, Distribution};
-use crate::{rep2join_expr, rep2join_str};
 use super::*;
-
-
+use crate::{rep2join_expr, rep2join_str};
+use float_cmp::ApproxEq;
+use rand::distributions::{Distribution, Standard};
+use std::fmt::{Display, Formatter};
+use std::ops::{Add, AddAssign, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
 
 /// vecn运算符(+ - * /)操作
 ///
 /// - t: trait
 /// - f: function
 macro_rules! impl_vecn_ops {
-    ( $t: ident, $f: ident, $VecN: ident, $Dim: expr, $($Ele: ident),+ ) => (
+    ($t:ident, $f:ident, $VecN:ident, $Dim:expr, $($Ele:ident),+) => {
         impl<T: GmPrimitive> $t for $VecN<T> {
             type Output = Self;
 
@@ -38,7 +29,7 @@ macro_rules! impl_vecn_ops {
                 Self { $($Ele: self.$Ele.$f(rhs)),+ }
             }
         }
-    );
+    };
 }
 
 /// vecn运算符(+= -= *= /=)操作
@@ -46,7 +37,7 @@ macro_rules! impl_vecn_ops {
 /// - t: trait
 /// - f: function
 macro_rules! impl_vecn_ops_assign {
-    ( $t: ident, $f: ident, $VecN: ident, $Dim: expr, $($Ele: ident),+ ) => (
+    ($t:ident, $f:ident, $VecN:ident, $Dim:expr, $($Ele:ident),+) => {
         impl<T: GmPrimitive> $t for $VecN<T> {
             fn $f(&mut self, rhs: Self) {
                 $(self.$Ele.$f(rhs.$Ele);)+
@@ -57,33 +48,33 @@ macro_rules! impl_vecn_ops_assign {
                 $(self.$Ele.$f(rhs);)+
             }
         }
-    )
+    }
 }
 
 /// 与维度相关的vecn操作
 macro_rules! impl_vecn_inner {
-    ( $VecN: ident, $Dim:expr, $x: ident, $y: ident ) => (
+    ($VecN:ident, $Dim:expr, $x:ident, $y:ident) => {
         impl<T: GmPrimitive> $VecN<T> {
             #[inline]
-            pub const fn to_vec3(&self, v: T) -> VecN3::<T> {
+            pub const fn to_vec3(&self, v: T) -> VecN3<T> {
                 VecN3::<T>::from(self.$x, self.$y, v)
             }
 
             #[inline]
-            pub const fn to_vec4(&self, v: T) -> VecN4::<T> {
+            pub const fn to_vec4(&self, v: T) -> VecN4<T> {
                 VecN4::<T>::from(self.$x, self.$y, v, v)
             }
         }
-    );
-    ( $VecN: ident, $Dim:expr, $x: ident, $y: ident, $z: ident ) => (
+    };
+    ($VecN:ident, $Dim:expr, $x:ident, $y:ident, $z:ident) => {
         impl<T: GmPrimitive> $VecN<T> {
             #[inline]
-            pub const fn to_vec2(&self) -> VecN2::<T> {
+            pub const fn to_vec2(&self) -> VecN2<T> {
                 VecN2::<T>::from(self.$x, self.$y)
             }
 
             #[inline]
-            pub const fn to_vec4(&self, v: T) -> VecN4::<T> {
+            pub const fn to_vec4(&self, v: T) -> VecN4<T> {
                 VecN4::<T>::from(self.$x, self.$y, self.$z, v)
             }
 
@@ -103,20 +94,20 @@ macro_rules! impl_vecn_inner {
                 }
             }
         }
-    );
-    ( $VecN: ident, $Dim:expr, $x: ident, $y: ident, $z: ident, $w: ident ) => (
+    };
+    ($VecN:ident, $Dim:expr, $x:ident, $y:ident, $z:ident, $w:ident) => {
         impl<T: GmPrimitive> $VecN<T> {
             #[inline]
-            pub const fn to_vec2(&self) -> VecN2::<T> {
+            pub const fn to_vec2(&self) -> VecN2<T> {
                 VecN2::<T>::from(self.$x, self.$y)
             }
 
             #[inline]
-            pub const fn to_vec3(&self) -> VecN3::<T> {
+            pub const fn to_vec3(&self) -> VecN3<T> {
                 VecN3::<T>::from(self.$x, self.$y, self.$z)
             }
         }
-    );
+    };
 }
 
 /// 基于宏实现vecn的基本操作
@@ -128,7 +119,7 @@ macro_rules! impl_vecn_inner {
 /// - Ele: 向量元素字段名
 /// - Idx: 向量元素对应下标
 macro_rules! def_vecn {
-    ( $VecN: ident, $Dim: expr, $($Ele: ident = $Idx: expr),+ ) => (
+    ($VecN:ident, $Dim:expr, $($Ele:ident=$Idx:expr),+) => {
     // start definition
 
     /// VecN结构定义
@@ -295,12 +286,12 @@ macro_rules! def_vecn {
     }
 
     // end definition
-    );
+    };
 }
 
-def_vecn!{VecN2, 2, x=0, y=1}
-def_vecn!{VecN3, 3, x=0, y=1, z=2}
-def_vecn!{VecN4, 4, x=0, y=1, z=2, w=3}
+def_vecn! {VecN2, 2, x=0, y=1}
+def_vecn! {VecN3, 3, x=0, y=1, z=2}
+def_vecn! {VecN4, 4, x=0, y=1, z=2, w=3}
 
 pub type Vec2 = VecN2<Tyf>;
 pub type Vec3 = VecN3<Tyf>;
@@ -308,8 +299,6 @@ pub type Vec4 = VecN4<Tyf>;
 pub type Vec2i = VecN2<Tyi>;
 pub type Vec3i = VecN3<Tyi>;
 pub type Vec4i = VecN4<Tyi>;
-
-
 
 #[cfg(test)]
 mod tests {
@@ -343,8 +332,18 @@ mod tests {
         assert!(approx_eq!(Tyf, v2.dot(&v2), 5.0, epsilon = 0.000001));
         assert!(approx_eq!(Tyf, v3.dot(&v3), 14.0, epsilon = 0.000001));
         assert!(approx_eq!(Tyf, v4.dot(&v4), 30.0, epsilon = 0.000001));
-        assert!(approx_eq!(Vec2, v2.normalize(), Vec2::from(0.4472136, 0.89442719), epsilon = 0.000001));
-        assert!(approx_eq!(Vec4, v4.normalize(), Vec4::from(0.18257419, 0.36514837, 0.54772256, 0.73029674), epsilon = 0.000001));
+        assert!(approx_eq!(
+            Vec2,
+            v2.normalize(),
+            Vec2::from(0.4472136, 0.89442719),
+            epsilon = 0.000001
+        ));
+        assert!(approx_eq!(
+            Vec4,
+            v4.normalize(),
+            Vec4::from(0.18257419, 0.36514837, 0.54772256, 0.73029674),
+            epsilon = 0.000001
+        ));
         let u = Vec3::from(1.0, 2.0, 3.0);
         let v = Vec3::from(3.0, 2.0, 1.0);
         assert!(approx_eq!(Vec3, u.cross(&v), Vec3::from(-4.0, 8.0, -4.0), epsilon = 0.000001));
@@ -384,4 +383,3 @@ mod tests {
         assert_eq!(v4, Vec4i::from(6, 9, 12, 15));
     }
 } /* tests */
-

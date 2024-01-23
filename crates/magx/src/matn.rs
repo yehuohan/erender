@@ -2,29 +2,20 @@
 
 #![allow(dead_code)]
 
-use std::ops::{
-    Add, AddAssign,
-    Sub, SubAssign,
-    Mul, MulAssign,
-    Div, DivAssign,
-    Neg,
-    Index, IndexMut,
-};
-use std::fmt::{Display, Formatter};
-use seq_macro::seq;
-use float_cmp::ApproxEq;
-use rand::distributions::{Standard, Distribution};
-use crate::{rep2join_expr, rep2join_str};
 use super::*;
-
-
+use crate::{rep2join_expr, rep2join_str};
+use float_cmp::ApproxEq;
+use rand::distributions::{Distribution, Standard};
+use seq_macro::seq;
+use std::fmt::{Display, Formatter};
+use std::ops::{Add, AddAssign, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Neg, Sub, SubAssign};
 
 /// matn运算符(+ - * /)操作
 ///
 /// - t: trait
 /// - f: function
 macro_rules! impl_matn_ops {
-    ( $t: ident, $f: ident, $MatN: ident, $VecN: ident, $Row: expr, $Col: expr, $($Ele: ident),+ ) => (
+    ($t:ident, $f:ident, $MatN:ident, $VecN:ident, $Row:expr, $Col:expr, $($Ele:ident),+) => {
         impl<T: GmPrimitive> $t for $MatN<T> {
             type Output = Self;
 
@@ -39,7 +30,7 @@ macro_rules! impl_matn_ops {
                 Self { $($Ele: self.$Ele.$f(rhs)),+}
             }
         }
-    );
+    };
 }
 
 /// matn运算符(+= -= *= /=)操作
@@ -47,7 +38,7 @@ macro_rules! impl_matn_ops {
 /// - t: trait
 /// - f: function
 macro_rules! impl_vecn_ops_assign {
-    ( $t: ident, $f: ident, $MatN: ident, $VecN: ident, $Row: expr, $Col: expr, $($Ele: ident),+ ) => (
+    ($t:ident, $f:ident, $MatN:ident, $VecN:ident, $Row:expr, $Col:expr, $($Ele:ident),+) => {
         impl<T: GmPrimitive> $t for $MatN<T> {
             fn $f(&mut self, rhs: Self) {
                 $(self.$Ele.$f(rhs.$Ele);)+
@@ -58,12 +49,12 @@ macro_rules! impl_vecn_ops_assign {
                 $(self.$Ele.$f(rhs);)+
             }
         }
-    )
+    }
 }
 
 /// 与维度相关的matn操作（只适用于方矩阵）
 macro_rules! impl_matn_inner {
-    ( $MatN: ident, $VecN: ident, $Row: expr, $Col: expr, $r0: ident, $r1: ident ) => (
+    ($MatN:ident, $VecN:ident, $Row:expr, $Col:expr, $r0:ident, $r1:ident) => {
         impl<T: GmPrimitive> $MatN<T> {
             #[inline]
             pub fn eye(v: T) -> Self {
@@ -74,7 +65,7 @@ macro_rules! impl_matn_inner {
             }
 
             #[inline]
-            pub fn diag(v: &$VecN::<T>) -> Self {
+            pub fn diag(v: &$VecN<T>) -> Self {
                 Self {
                     $r0: $VecN::<T>::from(v.x, T::zero()),
                     $r1: $VecN::<T>::from(T::zero(), v.y),
@@ -85,18 +76,16 @@ macro_rules! impl_matn_inner {
         impl $MatN<Tyf> {
             /// 矩阵求逆
             #[inline]
-            pub fn inverse(&self) -> $MatN::<Tyf> {
-                let d = 1.0 / (
-                      self[0][0] * self[1][1]
-                    - self[1][0] * self[0][1]);
+            pub fn inverse(&self) -> $MatN<Tyf> {
+                let d = 1.0 / (self[0][0] * self[1][1] - self[1][0] * self[0][1]);
                 Self {
                     $r0: $VecN::<Tyf>::from(self[1][1] * d, -self[0][1] * d),
                     $r1: $VecN::<Tyf>::from(-self[1][0] * d, self[0][0] * d),
                 }
             }
         }
-    );
-    ( $MatN: ident, $VecN: ident, $Row: expr, $Col: expr, $r0: ident, $r1: ident, $r2: ident ) => (
+    };
+    ($MatN:ident, $VecN:ident, $Row:expr, $Col:expr, $r0:ident, $r1:ident, $r2:ident) => {
         impl<T: GmPrimitive> $MatN<T> {
             #[inline]
             pub fn eye(v: T) -> Self {
@@ -108,7 +97,7 @@ macro_rules! impl_matn_inner {
             }
 
             #[inline]
-            pub fn diag(v: &$VecN::<T>) -> Self {
+            pub fn diag(v: &$VecN<T>) -> Self {
                 Self {
                     $r0: $VecN::<T>::from(v.x, T::zero(), T::zero()),
                     $r1: $VecN::<T>::from(T::zero(), v.y, T::zero()),
@@ -117,41 +106,45 @@ macro_rules! impl_matn_inner {
             }
 
             #[inline]
-            pub const fn to_mat4(&self, v: T) -> MatN4::<T> {
+            pub const fn to_mat4(&self, v: T) -> MatN4<T> {
                 MatN4::<T>::from(
                     self.$r0.to_vec4(v),
                     self.$r1.to_vec4(v),
                     self.$r2.to_vec4(v),
-                    VecN4::<T>::fill(v))
+                    VecN4::<T>::fill(v),
+                )
             }
         }
 
         impl $MatN<Tyf> {
             /// 矩阵求逆（参考glm的算法）
             #[inline]
-            pub fn inverse(&self) -> $MatN::<Tyf> {
-                let d = 1.0 / (
-                      self[0][0] * (self[1][1] * self[2][2] - self[1][2] * self[2][1])
+            pub fn inverse(&self) -> $MatN<Tyf> {
+                let s = self[0][0] * (self[1][1] * self[2][2] - self[1][2] * self[2][1])
                     - self[0][1] * (self[1][0] * self[2][2] - self[1][2] * self[2][0])
-                    + self[0][2] * (self[1][0] * self[2][1] - self[1][1] * self[2][0]));
+                    + self[0][2] * (self[1][0] * self[2][1] - self[1][1] * self[2][0]);
+                let d = 1.0 / s;
                 Self {
                     $r0: $VecN::<Tyf>::from(
-                         (self[1][1] * self[2][2] - self[1][2] * self[2][1]) * d,
+                        (self[1][1] * self[2][2] - self[1][2] * self[2][1]) * d,
                         -(self[0][1] * self[2][2] - self[0][2] * self[2][1]) * d,
-                         (self[0][1] * self[1][2] - self[0][2] * self[1][1]) * d),
+                        (self[0][1] * self[1][2] - self[0][2] * self[1][1]) * d,
+                    ),
                     $r1: $VecN::<Tyf>::from(
                         -(self[1][0] * self[2][2] - self[1][2] * self[2][0]) * d,
-                         (self[0][0] * self[2][2] - self[0][2] * self[2][0]) * d,
-                        -(self[0][0] * self[1][2] - self[0][2] * self[1][0]) * d),
+                        (self[0][0] * self[2][2] - self[0][2] * self[2][0]) * d,
+                        -(self[0][0] * self[1][2] - self[0][2] * self[1][0]) * d,
+                    ),
                     $r2: $VecN::<Tyf>::from(
-                         (self[1][0] * self[2][1] - self[1][1] * self[2][0]) * d,
+                        (self[1][0] * self[2][1] - self[1][1] * self[2][0]) * d,
                         -(self[0][0] * self[2][1] - self[0][1] * self[2][0]) * d,
-                         (self[0][0] * self[1][1] - self[0][1] * self[1][0]) * d),
+                        (self[0][0] * self[1][1] - self[0][1] * self[1][0]) * d,
+                    ),
                 }
             }
         }
-    );
-    ( $MatN: ident, $VecN: ident, $Row: expr, $Col: expr, $r0: ident, $r1: ident, $r2: ident, $r3: ident ) => (
+    };
+    ($MatN:ident, $VecN:ident, $Row:expr, $Col:expr, $r0:ident, $r1:ident, $r2:ident, $r3:ident) => {
         impl<T: GmPrimitive> $MatN<T> {
             #[inline]
             pub fn eye(v: T) -> Self {
@@ -164,7 +157,7 @@ macro_rules! impl_matn_inner {
             }
 
             #[inline]
-            pub fn diag(v: &$VecN::<T>) -> Self {
+            pub fn diag(v: &$VecN<T>) -> Self {
                 Self {
                     $r0: $VecN::<T>::from(v.x, T::zero(), T::zero(), T::zero()),
                     $r1: $VecN::<T>::from(T::zero(), v.y, T::zero(), T::zero()),
@@ -174,18 +167,15 @@ macro_rules! impl_matn_inner {
             }
 
             #[inline]
-            pub const fn to_mat3(&self) -> MatN3::<T> {
-                MatN3::<T>::from(
-                    self.$r0.to_vec3(),
-                    self.$r1.to_vec3(),
-                    self.$r2.to_vec3())
+            pub const fn to_mat3(&self) -> MatN3<T> {
+                MatN3::<T>::from(self.$r0.to_vec3(), self.$r1.to_vec3(), self.$r2.to_vec3())
             }
         }
 
         impl $MatN<Tyf> {
             /// 矩阵求逆（参考glm的算法）
             #[inline]
-            pub fn inverse(&self) -> $MatN::<Tyf> {
+            pub fn inverse(&self) -> $MatN<Tyf> {
                 let coef00 = self[2][2] * self[3][3] - self[2][3] * self[3][2];
                 let coef02 = self[2][1] * self[3][3] - self[2][3] * self[3][1];
                 let coef03 = self[2][1] * self[3][2] - self[2][2] * self[3][1];
@@ -227,8 +217,8 @@ macro_rules! impl_matn_inner {
                 let inv2 = vec0 * fac1 - vec1 * fac3 + vec3 * fac5;
                 let inv3 = vec0 * fac2 - vec1 * fac4 + vec2 * fac5;
 
-                let signa = $VecN::<Tyf>::from( 1.0, -1.0,  1.0, -1.0);
-                let signb = $VecN::<Tyf>::from(-1.0,  1.0, -1.0,  1.0);
+                let signa = $VecN::<Tyf>::from(1.0, -1.0, 1.0, -1.0);
+                let signb = $VecN::<Tyf>::from(-1.0, 1.0, -1.0, 1.0);
                 let inv = $MatN::<Tyf>::from(inv0 * signa, inv1 * signb, inv2 * signa, inv3 * signb).transpose();
 
                 let row0 = $VecN::<Tyf>::from(inv[0][0], inv[0][1], inv[0][2], inv[0][3]);
@@ -239,7 +229,7 @@ macro_rules! impl_matn_inner {
                 inv * d
             }
         }
-    );
+    };
 }
 
 /// 基于宏实现matn的基本操作
@@ -253,7 +243,7 @@ macro_rules! impl_matn_inner {
 /// - Col: 矩阵列数
 /// - Ele: 矩阵行向量字段名
 macro_rules! def_matn {
-    ( $MatN: ident, $VecN: ident, $Row: expr, $Col: expr, $($Ele: ident = $Idx: expr),+ ) => (
+    ($MatN:ident, $VecN:ident, $Row:expr, $Col:expr, $($Ele:ident=$Idx:expr),+) => {
     // start definition
 
     /// MatN结构定义
@@ -455,12 +445,12 @@ macro_rules! def_matn {
     }
 
     // end definition
-    );
+    };
 }
 
-def_matn!{MatN2, VecN2, 2, 2, r0=0, r1=1}
-def_matn!{MatN3, VecN3, 3, 3, r0=0, r1=1, r2=2}
-def_matn!{MatN4, VecN4, 4, 4, r0=0, r1=1, r2=2, r3=3}
+def_matn! {MatN2, VecN2, 2, 2, r0=0, r1=1}
+def_matn! {MatN3, VecN3, 3, 3, r0=0, r1=1, r2=2}
+def_matn! {MatN4, VecN4, 4, 4, r0=0, r1=1, r2=2, r3=3}
 
 pub type Mat2 = MatN2<Tyf>;
 pub type Mat3 = MatN3<Tyf>;
@@ -468,8 +458,6 @@ pub type Mat4 = MatN4<Tyf>;
 pub type Mat2i = MatN2<Tyi>;
 pub type Mat3i = MatN3<Tyi>;
 pub type Mat4i = MatN4<Tyi>;
-
-
 
 #[cfg(test)]
 mod tests {
@@ -521,32 +509,44 @@ mod tests {
         );
         let m = Mat4::diag(&Vec4::from(1.0, 2.0, 3.0, 4.0));
         println!("nxm:\n{}", n.mul_mat(&m));
-        assert!(approx_eq!(Mat4, n.mul_mat(&m),
+        assert!(approx_eq!(
+            Mat4,
+            n.mul_mat(&m),
             Mat4::from(
                 Vec4::from(1.0, 4.0, 9.0, 16.0),
                 Vec4::from(2.0, 6.0, 12.0, 20.0),
                 Vec4::from(3.0, 8.0, 15.0, 24.0),
-                Vec4::from(4.0, 10.0, 18.0, 28.0)),
-            epsilon = 0.000001));
+                Vec4::from(4.0, 10.0, 18.0, 28.0)
+            ),
+            epsilon = 0.000001
+        ));
 
         // norm & normalize
         let m = Mat4::diag(&Vec4::from(1.0, 2.0, 3.0, 4.0));
         println!("normalize: \n{}", m.normalize());
         println!("norm: {}", m.norm());
-        assert!(approx_eq!(Mat4, m.normalize(),
-            m / ((1.0*1.0 + 2.0*2.0 + 3.0*3.0 + 4.0*4.0) as Tyf).sqrt(),
-            epsilon = 0.000001));
-        assert!(approx_eq!(Tyf, m.norm(),
-            ((1.0*1.0 + 2.0*2.0 + 3.0*3.0 + 4.0*4.0) as Tyf).sqrt(),
-            epsilon = 0.000001));
+        assert!(approx_eq!(
+            Mat4,
+            m.normalize(),
+            m / ((1.0 * 1.0 + 2.0 * 2.0 + 3.0 * 3.0 + 4.0 * 4.0) as Tyf).sqrt(),
+            epsilon = 0.000001
+        ));
+        assert!(approx_eq!(
+            Tyf,
+            m.norm(),
+            ((1.0 * 1.0 + 2.0 * 2.0 + 3.0 * 3.0 + 4.0 * 4.0) as Tyf).sqrt(),
+            epsilon = 0.000001
+        ));
 
         // transpose
+        #[rustfmt::skip]
         let m = Mat4i::from_array(&[
             [1, 1, 1, 1],
             [2, 2, 2, 2],
             [3, 3, 3, 3],
             [4, 4, 4, 4],
         ]);
+        #[rustfmt::skip]
         assert_eq!(m.transpose(),
             Mat4i::from_array(&[
                 [1, 2, 3, 4],
@@ -556,18 +556,24 @@ mod tests {
         );
 
         // inverse
+        #[rustfmt::skip]
         let m = Mat2::from_array(&[
             [1.0, 2.0],
             [3.0, 4.0],
         ]);
         let im = m.inverse();
         println!("inverse2:\n{}", im);
-        assert!(approx_eq!(Mat2, im,
+        #[rustfmt::skip]
+        assert!(approx_eq!(
+            Mat2,
+            im,
             Mat2::from_array(&[
                 [-2.0, 1.0],
                 [1.5, -0.5],
             ]),
-            epsilon = 0.001));
+            epsilon = 0.001
+        ));
+        #[rustfmt::skip]
         let m = Mat3::from_array(&[
             [ 1.707, 0.293,  1.000],
             [ 0.439, 2.561, -1.500],
@@ -575,6 +581,7 @@ mod tests {
         ]);
         let im = m.inverse();
         println!("inverse3:\n{}", im);
+        #[rustfmt::skip]
         assert!(approx_eq!(Mat3, im,
             Mat3::from_array(&[
                 [0.427,  0.049, -0.100],
@@ -582,6 +589,7 @@ mod tests {
                 [0.250, -0.167,  0.141],
             ]),
             epsilon = 0.001));
+        #[rustfmt::skip]
         let m = Mat4::from_array(&[
             [ 3.732, 0.268,  1.414, 5.000],
             [ 0.201, 2.799, -1.061, 2.000],
@@ -590,6 +598,7 @@ mod tests {
         ]);
         let im = m.inverse();
         println!("inverse4:\n{}", im);
+        #[rustfmt::skip]
         assert!(approx_eq!(Mat4, im,
             Mat4::from_array(&[
             [  0.233,  0.022, -0.071, -0.999],
@@ -599,10 +608,12 @@ mod tests {
             ]),
             epsilon = 0.001));
 
-        assert!(approx_eq!(Mat4,
+        assert!(approx_eq!(
+            Mat4,
             m.inverse().transpose(),
             m.transpose().inverse(),
-            epsilon = 0.001));
+            epsilon = 0.001
+        ));
     }
 
     #[test]
@@ -616,9 +627,12 @@ mod tests {
         m4 -= 1.0;
         m4 *= 6.0;
         m4 /= 2.0;
-        assert!(approx_eq!(Mat4, m4,
+        assert!(approx_eq!(
+            Mat4,
+            m4,
             Mat4::from(Vec4::fill(6.0), Vec4::fill(9.0), Vec4::fill(12.0), Vec4::fill(15.0)),
-            epsilon = 0.000001));
+            epsilon = 0.000001
+        ));
 
         let mut m4 = Mat4i::new();
         m4[0] = Vec4i::fill(1);
@@ -629,6 +643,9 @@ mod tests {
         m4 -= 1;
         m4 *= 6;
         m4 /= 2;
-        assert_eq!(m4, Mat4i::from(Vec4i::fill(6), Vec4i::fill(9), Vec4i::fill(12), Vec4i::fill(15)));
+        assert_eq!(
+            m4,
+            Mat4i::from(Vec4i::fill(6), Vec4i::fill(9), Vec4i::fill(12), Vec4i::fill(15))
+        );
     }
 } /* tests */

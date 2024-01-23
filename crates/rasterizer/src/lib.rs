@@ -8,7 +8,7 @@
 //! - 视口变换
 //! - 光栅化
 //!
-//! ```text, no_run
+//! ```text
 //!     Modeling Trans       Viewing Trans       Projection Trans       Normalization Trans & Clipping       Viewport Trans
 //! MC ----------------> WC ---------------> VC ------------------> PC --------------------------------> NC ----------------> DC
 //! ```
@@ -22,7 +22,7 @@
 //!
 //! # 坐标变换
 //!
-//! ```text, no_run
+//! ```text
 //!         ^ y
 //!         |
 //!         | / -z
@@ -62,7 +62,6 @@
 //! 视口变换会将NC坐标映射到屏幕坐标系上。
 //!
 
-
-pub mod rasterizer;
 pub mod pipeline;
+pub mod rasterizer;
 pub mod shader;

@@ -1,13 +1,12 @@
-use std::ops::Range;
-use std::any::Any;
+use super::asset::*;
+use super::ModelUniformVarsRef;
 use magx::*;
 use rasterizer::{
     pipeline::IPrimitive,
     shader::{IShader, UniformMatrix},
 };
-use super::asset::*;
-use super::ModelUniformVarsRef;
-
+use std::any::Any;
+use std::ops::Range;
 
 /// mesh类型
 pub enum EMesh {
@@ -32,14 +31,19 @@ impl Mesh {
     pub fn new(e: EMesh, name: &str, uniforms: ModelUniformVarsRef) -> Self {
         let o = Obj::new(name).unwrap();
         let m = Mtl::new(name);
-        println!(r#"
+        println!(
+            r#"
 {}:
     Obj: {}
-    Mtl: {}"#, name, o, m);
+    Mtl: {}"#,
+            name, o, m
+        );
 
         Self {
             name: name.to_string(),
-            e, o, m,
+            e,
+            o,
+            m,
             uniforms,
         }
     }
@@ -47,7 +51,10 @@ impl Mesh {
 
 impl IPrimitive for Mesh {
     fn indices(&self) -> Range<usize> {
-        return Range{ start: 0,  end: self.o.f.len() }
+        return Range {
+            start: 0,
+            end: self.o.f.len(),
+        };
     }
 }
 
@@ -66,42 +73,36 @@ impl IShader for Mesh {
         let idx = &self.o.f[pidx];
         let uni = self.uniforms.borrow();
         // 片段三个顶点的纹理坐标插值
-        let u = interpolate(&bc,
-            &self.o.vt[idx.vt.0].x,
-            &self.o.vt[idx.vt.1].x,
-            &self.o.vt[idx.vt.2].x);
-        let v = interpolate(&bc,
-            &self.o.vt[idx.vt.0].y,
-            &self.o.vt[idx.vt.1].y,
-            &self.o.vt[idx.vt.2].y);
+        let u = interpolate(&bc, &self.o.vt[idx.vt.0].x, &self.o.vt[idx.vt.1].x, &self.o.vt[idx.vt.2].x);
+        let v = interpolate(&bc, &self.o.vt[idx.vt.0].y, &self.o.vt[idx.vt.1].y, &self.o.vt[idx.vt.2].y);
         // 片段的缺省diffuse颜色
         let dd = Vec4::from(0.0, 0.0, 1.0, 1.0);
         // 片段的缺省specular颜色
         let ss = Vec4::fill(1.0);
         // 片段三个顶点的法向量插值
-        let nn = interpolate(&bc,
-            &self.o.vn[idx.vn.0],
-            &self.o.vn[idx.vn.1],
-            &self.o.vn[idx.vn.2]);
+        let nn = interpolate(&bc, &self.o.vn[idx.vn.0], &self.o.vn[idx.vn.1], &self.o.vn[idx.vn.2]);
         // 通过模型变换，将片段的坐标变换世界坐标系中，用于计算光照
-        let frag_pos = uni.mat.model.mul_vec(&interpolate(&bc,
-            &self.o.v[idx.v.0],
-            &self.o.v[idx.v.1],
-            &self.o.v[idx.v.2],
-            ).to_vec4(1.0)).to_vec3();
+        let frag_pos = uni
+            .mat
+            .model
+            .mul_vec(&interpolate(&bc, &self.o.v[idx.v.0], &self.o.v[idx.v.1], &self.o.v[idx.v.2]).to_vec4(1.0))
+            .to_vec3();
 
         match self.e {
             EMesh::Standard => {
                 let d = self.m.diff.color(u, v).unwrap_or(dd);
                 let s = self.m.spec.color(u, v).unwrap_or(ss);
                 let n = uni.mat.mit.mul_vec(&self.m.norm.o_vec(u, v).unwrap_or(nn)).normalize();
-                uni.comps.borrow().light.calc_blinn_phong(&d, &s, &n,
-                    &(uni.comps.borrow().camera.eye - frag_pos)).w(1.0)
-            },
+                uni.comps
+                    .borrow()
+                    .light
+                    .calc_blinn_phong(&d, &s, &n, &(uni.comps.borrow().camera.eye - frag_pos))
+                    .w(1.0)
+            }
             EMesh::Lite => {
                 // 只用diffuse贴图，渲染出“光滑”的模型
                 self.m.diff.color(u, v).unwrap_or(dd)
-            },
+            }
             EMesh::Debug => {
                 let n = uni.mat.mit.mul_vec(&nn).normalize();
 
@@ -115,7 +116,6 @@ impl IShader for Mesh {
     }
 }
 
-
 /// 锥台模型
 pub struct MFrustum {
     name: String,
@@ -128,6 +128,7 @@ pub struct MFrustum {
 
 impl MFrustum {
     pub fn new() -> Self {
+        #[rustfmt::skip]
         let v = vec![
             // -- position --     -- color --   -- texture --
             [-0.5, -0.5, -0.5,  1.0, 0.0, 0.0,   0.0, 0.0,   // back
@@ -191,17 +192,24 @@ impl MFrustum {
             ));
         }
 
-        println!("Frustum: {{faces: {}, vertices: {}, colors: {}}}",
-            faces.len(), pos.len(), color.len());
+        println!(
+            "Frustum: {{faces: {}, vertices: {}, colors: {}}}",
+            faces.len(),
+            pos.len(),
+            color.len()
+        );
 
         Self {
             name: String::from("Frustum"),
-            faces, pos, color,
+            faces,
+            pos,
+            color,
             mvp: Mat4::eye(1.0),
         }
     }
 
     pub fn new_cube() -> Self {
+        #[rustfmt::skip]
         let v = vec![
             // -- triangle1    -- triangle2      -- triangle3
             [-0.5, -0.5, -0.5,  0.5,  0.5, -0.5,  0.5, -0.5, -0.5,], // back
@@ -241,12 +249,18 @@ impl MFrustum {
             ));
         }
 
-        println!("Cube: {{faces: {}, vertices: {}, colors: {}}}",
-            faces.len(), pos.len(), color.len());
+        println!(
+            "Cube: {{faces: {}, vertices: {}, colors: {}}}",
+            faces.len(),
+            pos.len(),
+            color.len()
+        );
 
         Self {
             name: String::from("Cube"),
-            faces, pos, color,
+            faces,
+            pos,
+            color,
             mvp: Mat4::eye(1.0),
         }
     }
@@ -254,7 +268,10 @@ impl MFrustum {
 
 impl IPrimitive for MFrustum {
     fn indices(&self) -> Range<usize> {
-        return Range{ start: 0,  end: self.faces.len() }
+        return Range {
+            start: 0,
+            end: self.faces.len(),
+        };
     }
 }
 
@@ -279,9 +296,6 @@ impl IShader for MFrustum {
     fn fragment(&self, pidx: usize, bc: &Vec3) -> Vec4 {
         let idx = &self.faces[pidx];
         // 基于顶点颜色插值
-        interpolate(&bc,
-            &self.color[idx.v.0],
-            &self.color[idx.v.1],
-            &self.color[idx.v.2]).to_vec4(1.0)
+        interpolate(&bc, &self.color[idx.v.0], &self.color[idx.v.1], &self.color[idx.v.2]).to_vec4(1.0)
     }
 }

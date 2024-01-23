@@ -2,10 +2,9 @@
 
 use magx::*;
 
-
 // 不同的光照分量，光源的影响也不一样（这里使用固定的光照分量系数）
-const ambient: Vec4  = Vec4::from(0.05, 0.05, 0.05, 1.0);
-const diffuse: Vec4  = Vec4::from(0.9, 0.9, 0.9, 1.0);
+const ambient: Vec4 = Vec4::from(0.05, 0.05, 0.05, 1.0);
+const diffuse: Vec4 = Vec4::from(0.9, 0.9, 0.9, 1.0);
 const specular: Vec4 = Vec4::from(1.0, 1.0, 1.0, 1.0);
 /// 影响镜面高光的散身/半径
 const shininess: i32 = 32;

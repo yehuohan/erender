@@ -1,9 +1,8 @@
 //! 图形光栅渲染器
 
-use magx::*;
 use crate::pipeline::{IPipeline, IPrimitive};
 use crate::shader::{GlslVars, IGlsl};
-
+use magx::*;
 
 /// 光栅渲染器接口
 pub trait IRasterizer {
@@ -26,7 +25,7 @@ pub trait IRasterizer {
         let num = ab.x.abs().max(ab.y.abs());
         let dxy = ab / num;
         let mut p = points[0]; // 从第0个点开始画
-        for _ in 0 .. num as u32 {
+        for _ in 0..num as u32 {
             p += dxy;
             self.set_color(p.x as u32, p.y as u32, &color);
         }
@@ -42,8 +41,9 @@ pub trait IRasterizer {
     fn triangle(&mut self, points: &[Vec2; 3], colors: &[Vec4]) {
         let (lb, rt) = bound_box(points);
 
-        for i in lb.x as u32 .. rt.x as u32 { // 小于0的坐标，为自动转成0
-            for j in lb.y as u32 .. rt.y as u32 {
+        for i in lb.x as u32..rt.x as u32 {
+            // 小于0的坐标，为自动转成0
+            for j in lb.y as u32..rt.y as u32 {
                 if let Some(bc) = barycentric(points, Vec2::from(i as Tyf, j as Tyf)) {
                     // 基于顶点颜色进行插值
                     let c = if colors.len() >= 3 {
@@ -201,8 +201,9 @@ impl IPipeline for Rasterizer {
         // 光栅化，用pixels保存一个片段中所有需要着色的像素点
         let mut pixels = Vec::new();
 
-        for i in xlo .. xhi { // 小于0的坐标，为自动转成0
-            for j in ylo .. yhi {
+        for i in xlo..xhi {
+            // 小于0的坐标，为自动转成0
+            for j in ylo..yhi {
                 if let Some(bc) = barycentric(&abc, Vec2::from(i as Tyf, j as Tyf)) {
                     // 重心坐标校正
                     // - https://www.comp.nus.edu.sg/~lowkl/publications/lowk_persp_interp_techrep.pdf
@@ -244,7 +245,6 @@ impl IPipeline for Rasterizer {
         false
     }
 }
-
 
 #[test]
 fn rasterizer_test() {

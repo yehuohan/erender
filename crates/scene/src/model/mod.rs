@@ -1,20 +1,16 @@
 #![allow(dead_code)]
 
-pub mod mesh;
 pub mod asset;
+pub mod mesh;
 
-use std::rc::Rc;
-use std::cell::RefCell;
-use magx::*;
-use rasterizer::{
-    pipeline::IPrimitive,
-    shader::UniformMatrix,
-};
-use self::mesh::{Mesh, EMesh, MFrustum};
+use self::mesh::{EMesh, MFrustum, Mesh};
 use crate::camera::Camera;
 use crate::light::Light;
 use crate::scene::SceneComponentsRef;
-
+use magx::*;
+use rasterizer::{pipeline::IPrimitive, shader::UniformMatrix};
+use std::cell::RefCell;
+use std::rc::Rc;
 
 /// 场景模型需要的uniform变量
 pub struct ModelUniformVars {
@@ -28,10 +24,9 @@ pub type ModelUniformVarsRef = Rc<RefCell<ModelUniformVars>>;
 
 impl ModelUniformVars {
     pub fn new(comps: SceneComponentsRef) -> ModelUniformVarsRef {
-        Rc::new(RefCell::new(
-            ModelUniformVars {
-                mat: UniformMatrix::new(),
-                comps,
+        Rc::new(RefCell::new(ModelUniformVars {
+            mat: UniformMatrix::new(),
+            comps,
         }))
     }
 }
@@ -47,13 +42,13 @@ pub struct Model {
 }
 
 macro_rules! load_mesh {
-    (standard, $name: tt, $uniforms: ident) => {
+    (standard, $name:tt, $uniforms:ident) => {
         Mesh::new(EMesh::Standard, $name, Rc::clone(&$uniforms))
     };
-    (lite, $name: tt, $uniforms: ident) => {
+    (lite, $name:tt, $uniforms:ident) => {
         Mesh::new(EMesh::Lite, $name, Rc::clone(&$uniforms))
     };
-    (debug, $name: tt, $uniforms: ident) => {
+    (debug, $name:tt, $uniforms:ident) => {
         Mesh::new(EMesh::Debug, $name, Rc::clone(&$uniforms))
     };
     (frustum) => {
@@ -69,17 +64,17 @@ impl Model {
         let mut meshes: Vec<Box<dyn IPrimitive>> = Vec::new();
         let uniforms = ModelUniformVars::new(comps);
 
-        //meshes.push(Box::new(load_mesh!(standard, "african_head", uniforms)));
-        //meshes.push(Box::new(load_mesh!(standard, "african_head_eye_inner", uniforms)));
-        //meshes.push(Box::new(load_mesh!(standard, "diablo3_pose", uniforms)));
+        // meshes.push(Box::new(load_mesh!(standard, "african_head", uniforms)));
+        // meshes.push(Box::new(load_mesh!(standard, "african_head_eye_inner", uniforms)));
+        // meshes.push(Box::new(load_mesh!(standard, "diablo3_pose", uniforms)));
         meshes.push(Box::new(load_mesh!(lite, "floor", uniforms)));
-        //meshes.push(Box::new(load_mesh!(debug, "sphere", uniforms)));
+        // meshes.push(Box::new(load_mesh!(debug, "sphere", uniforms)));
 
-        //meshes.push(Box::new(load_mesh!(standard, "spot", uniforms)));
-        //meshes.push(Box::new(load_mesh!(lite, "spot", uniforms)));
-        //meshes.push(Box::new(load_mesh!(debug, "spot", uniforms)));
+        // meshes.push(Box::new(load_mesh!(standard, "spot", uniforms)));
+        // meshes.push(Box::new(load_mesh!(lite, "spot", uniforms)));
+        // meshes.push(Box::new(load_mesh!(debug, "spot", uniforms)));
 
-        //meshes.push(Box::new(load_mesh!(cube)));
+        // meshes.push(Box::new(load_mesh!(cube)));
         meshes.push(Box::new(load_mesh!(frustum)));
 
         Self { meshes, uniforms }
@@ -136,7 +131,6 @@ impl ModelLight {
     }
 }
 
-
 /// 视锥体剃除
 ///
 /// 剃除不在视锥体内的mesh
@@ -152,12 +146,12 @@ struct ViewCulling {
 impl ViewCulling {
     fn new(&mvp: &Mat4) -> Self {
         Self {
-            up:     mvp.col(3) - mvp.col(1),
-            down:   mvp.col(3) + mvp.col(1),
-            left:   mvp.col(3) + mvp.col(0),
-            right:  mvp.col(3) - mvp.col(0),
-            near:   mvp.col(3) + mvp.col(2),
-            far:    mvp.col(3) - mvp.col(2),
+            up: mvp.col(3) - mvp.col(1),
+            down: mvp.col(3) + mvp.col(1),
+            left: mvp.col(3) + mvp.col(0),
+            right: mvp.col(3) - mvp.col(0),
+            near: mvp.col(3) + mvp.col(2),
+            far: mvp.col(3) - mvp.col(2),
         }
     }
 
@@ -165,8 +159,11 @@ impl ViewCulling {
     fn contains(&self, point: &Vec3) -> bool {
         let p = point.to_vec4(1.0);
 
-        self.up.dot(&p) >= 0.0   && self.down.dot(&p) >= 0.0 &&
-        self.left.dot(&p) >= 0.0 && self.right.dot(&p) >= 0.0 &&
-        self.near.dot(&p) >= 0.0 && self.far.dot(&p) >= 0.0
+        self.up.dot(&p) >= 0.0
+            && self.down.dot(&p) >= 0.0
+            && self.left.dot(&p) >= 0.0
+            && self.right.dot(&p) >= 0.0
+            && self.near.dot(&p) >= 0.0
+            && self.far.dot(&p) >= 0.0
     }
 }
