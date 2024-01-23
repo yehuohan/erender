@@ -13,6 +13,8 @@ struct SoftRenderer {
     rasterizer: Rasterizer,
     draw_color: bool,
     draw_depth: bool,
+    /// Request redraw scene
+    redraw: bool,
 }
 
 impl SoftRenderer {
@@ -33,6 +35,7 @@ impl SoftRenderer {
             rasterizer,
             draw_color: true,
             draw_depth: true,
+            redraw: true,
         }
     }
 
@@ -65,6 +68,7 @@ impl SoftRenderer {
         let en_cull_back_face = self.rasterizer.glsl_vars().en_cull_back_face;
         let en_wire_frame = self.rasterizer.glsl_vars().en_wire_frame;
         if *pressed && modifiers.is_none() {
+            self.redraw = true;
             match key {
                 egui::Key::E => self.scene.comps.borrow_mut().camera.rotate_x(Angle::Ang(10.0)),
                 egui::Key::D => self.scene.comps.borrow_mut().camera.rotate_x(Angle::Ang(-10.0)),
@@ -78,7 +82,7 @@ impl SoftRenderer {
                 egui::Key::X => self.rasterizer.enable_cull_face(!en_cull_back_face),
                 egui::Key::C => self.draw_color = !self.draw_color,
                 egui::Key::V => self.draw_depth = !self.draw_depth,
-                _ => {}
+                _ => self.redraw = false,
             }
         }
         if *pressed && egui::Key::S == *key && modifiers.command_only() {
@@ -111,8 +115,18 @@ impl eframe::App for SoftRenderer {
             .show(ctx, |ui| {
                 ui.label(egui::RichText::new("Rotate[e,d,s,f,w,r]"));
                 ui.label(egui::RichText::new("Move[a,g]"));
-                ui.checkbox(&mut self.rasterizer.wire_frame(), egui::RichText::new("Wire[z]"));
-                ui.checkbox(&mut self.rasterizer.cull_face(), egui::RichText::new("Cull[x]"));
+                if ui
+                    .checkbox(&mut self.rasterizer.wire_frame(), egui::RichText::new("Wire[z]"))
+                    .changed()
+                {
+                    self.redraw = true;
+                }
+                if ui
+                    .checkbox(&mut self.rasterizer.cull_face(), egui::RichText::new("Cull[x]"))
+                    .changed()
+                {
+                    self.redraw = true;
+                }
                 ui.checkbox(&mut self.draw_color, egui::RichText::new("Color[c]"));
                 ui.checkbox(&mut self.draw_depth, egui::RichText::new("Depth[v]"));
                 if ui.button("Save[^s]").clicked() {
@@ -160,7 +174,10 @@ impl eframe::App for SoftRenderer {
             });
         });
 
-        self.scene.update(&mut self.rasterizer);
+        if self.redraw {
+            self.scene.update(&mut self.rasterizer);
+        }
+        self.redraw = false;
     }
 }
 
