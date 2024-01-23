@@ -6,6 +6,7 @@ use magx::*;
 use rasterizer::rasterizer::Rasterizer;
 use rasterizer::shader::IGlsl;
 use scene::scene::Scene;
+use std::collections::HashMap;
 use std::time::Instant;
 
 struct SoftRenderer {
@@ -15,6 +16,8 @@ struct SoftRenderer {
     draw_depth: bool,
     /// Request redraw scene
     redraw: bool,
+    /// Meshes to draw on scene
+    meshes: HashMap<&'static str, bool>,
 }
 
 impl SoftRenderer {
@@ -22,13 +25,27 @@ impl SoftRenderer {
         // Load scene
         let start = Instant::now();
         let mut scene = Scene::new(sz);
-        println!("scene load time: {} ms", start.elapsed().as_millis());
+        println!("Scene load time: {} ms", start.elapsed().as_millis());
+
+        // Create rasterizer
+        let mut rasterizer = Rasterizer::new(scene.sz);
+
+        // Create meshes list to draw
+        let mut meshes: HashMap<&'static str, bool> = HashMap::new();
+        for name in scene.get_meshes() {
+            meshes.insert(name, false);
+        }
+        if let Some(name) = meshes.get_mut("frustum") {
+            *name = true;
+        }
+        if let Some(name) = meshes.get_mut("floor") {
+            *name = true;
+        }
 
         // Update scene with rasterizer
         let start = Instant::now();
-        let mut rasterizer = Rasterizer::new(scene.sz);
-        scene.update(&mut rasterizer);
-        println!("render time: {} ms", start.elapsed().as_millis());
+        scene.update(&mut rasterizer, &meshes);
+        println!("Render time: {} ms", start.elapsed().as_millis());
 
         Self {
             scene,
@@ -36,6 +53,7 @@ impl SoftRenderer {
             draw_color: true,
             draw_depth: true,
             redraw: true,
+            meshes,
         }
     }
 
@@ -113,22 +131,27 @@ impl eframe::App for SoftRenderer {
             .show_separator_line(false)
             .resizable(false)
             .show(ctx, |ui| {
-                ui.label(egui::RichText::new("Rotate[e,d,s,f,w,r]"));
-                ui.label(egui::RichText::new("Move[a,g]"));
-                if ui
-                    .checkbox(&mut self.rasterizer.wire_frame(), egui::RichText::new("Wire[z]"))
-                    .changed()
-                {
+                ui.label("Rotate: {e,d,s,f,w,r}");
+                ui.label("Move: {a,g}");
+                if ui.checkbox(&mut self.rasterizer.wire_frame(), "Wire[z]").changed() {
                     self.redraw = true;
                 }
-                if ui
-                    .checkbox(&mut self.rasterizer.cull_face(), egui::RichText::new("Cull[x]"))
-                    .changed()
-                {
+                if ui.checkbox(&mut self.rasterizer.cull_face(), "Cull[x]").changed() {
                     self.redraw = true;
                 }
-                ui.checkbox(&mut self.draw_color, egui::RichText::new("Color[c]"));
-                ui.checkbox(&mut self.draw_depth, egui::RichText::new("Depth[v]"));
+                ui.checkbox(&mut self.draw_color, "Color[c]");
+                ui.checkbox(&mut self.draw_depth, "Depth[v]");
+                ui.label("Meshes:");
+                for name in self.scene.get_meshes() {
+                    if let Some(mut draw) = self.meshes.get_mut(name) {
+                        ui.horizontal(|ui| {
+                            ui.label("  ");
+                            if ui.checkbox(&mut draw, name).changed() {
+                                self.redraw = true;
+                            }
+                        });
+                    }
+                }
                 if ui.button("Save[^s]").clicked() {
                     SoftRenderer::save(self);
                 };
@@ -175,7 +198,7 @@ impl eframe::App for SoftRenderer {
         });
 
         if self.redraw {
-            self.scene.update(&mut self.rasterizer);
+            self.scene.update(&mut self.rasterizer, &self.meshes);
         }
         self.redraw = false;
     }
@@ -184,7 +207,7 @@ impl eframe::App for SoftRenderer {
 pub fn run(sz: (u32, u32)) -> eframe::Result<()> {
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
-            .with_inner_size([sz.0 as f32 * 2.0 + 195.0, sz.1 as f32 + 15.0])
+            .with_inner_size([sz.0 as f32 * 2.0 + 215.0, sz.1 as f32 + 15.0])
             .with_resizable(false),
         ..Default::default()
     };
@@ -207,7 +230,7 @@ pub fn run(sz: (u32, u32)) -> eframe::Result<()> {
             .push("FantasqueSansMono".to_owned());
         cc.egui_ctx.set_fonts(fonts);
         cc.egui_ctx.style_mut(|style| {
-            style.spacing.item_spacing = egui::vec2(10.0, 10.0);
+            style.spacing.item_spacing = egui::vec2(10.0, 5.0);
             style.spacing.button_padding.x = 15.0;
             if let Some(fondid) = style.text_styles.get_mut(&egui::TextStyle::Body) {
                 *fondid = egui::FontId::new(16.0, egui::FontFamily::Monospace);
