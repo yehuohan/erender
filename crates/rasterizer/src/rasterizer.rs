@@ -116,8 +116,8 @@ impl IRasterizer for Rasterizer {
 
 impl IGlsl for Rasterizer {
     #[inline]
-    fn glsl_vars(&self) -> &GlslVars {
-        &self.gv
+    fn frag_coord(&self) -> &(Vec4, Vec4, Vec4) {
+        &self.gv.gl_FragCoord
     }
 
     #[inline]
@@ -128,16 +128,6 @@ impl IGlsl for Rasterizer {
     #[inline]
     fn cull_face(&mut self) -> &mut bool {
         &mut self.gv.en_cull_back_face
-    }
-
-    #[inline]
-    fn enable_wire_frame(&mut self, val: bool) {
-        self.gv.en_wire_frame = val;
-    }
-
-    #[inline]
-    fn enable_cull_face(&mut self, val: bool) {
-        self.gv.en_cull_back_face = val;
     }
 }
 

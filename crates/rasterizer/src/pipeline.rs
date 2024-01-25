@@ -52,7 +52,7 @@ pub trait IPipeline: IRasterizer + IGlsl {
 
     /// 绘制模型
     fn draw(&mut self, primitive: &Box<dyn IPrimitive>) {
-        if self.glsl_vars().en_wire_frame {
+        if *self.wire_frame() {
             self.draw_wire(primitive);
         } else {
             self.draw_fill(primitive);
@@ -64,7 +64,7 @@ pub trait IPipeline: IRasterizer + IGlsl {
         for pidx in primitive.indices() {
             self.vertex(primitive, pidx);
             self.mapping();
-            if (!self.glsl_vars().en_cull_back_face) || (self.glsl_vars().en_cull_back_face && self.culling()) {
+            if (!*self.cull_face()) || (*self.cull_face() && self.culling()) {
                 let pixels = self.rasterization();
                 self.fragment(primitive, pidx, &pixels);
             }
@@ -80,8 +80,8 @@ pub trait IPipeline: IRasterizer + IGlsl {
             self.mapping();
             let culling = self.culling();
             let color = if culling { fg } else { bg };
-            if (!self.glsl_vars().en_cull_back_face) || (self.glsl_vars().en_cull_back_face && culling) {
-                let (a, b, c) = self.glsl_vars().gl_FragCoord;
+            if (!*self.cull_face()) || (*self.cull_face() && culling) {
+                let &(a, b, c) = self.frag_coord();
                 let a = a.to_vec2();
                 let b = b.to_vec2();
                 let c = c.to_vec2();

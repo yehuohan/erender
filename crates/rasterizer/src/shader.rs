@@ -4,11 +4,9 @@ use magx::*;
 use std::any::Any;
 
 pub trait IGlsl {
-    fn glsl_vars(&self) -> &GlslVars;
+    fn frag_coord(&self) -> &(Vec4, Vec4, Vec4);
     fn wire_frame(&mut self) -> &mut bool;
     fn cull_face(&mut self) -> &mut bool;
-    fn enable_wire_frame(&mut self, val: bool);
-    fn enable_cull_face(&mut self, val: bool);
 }
 
 /// 着色器内建变量
