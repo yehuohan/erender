@@ -83,8 +83,6 @@ impl SoftRenderer {
     }
 
     fn handle_keys(&mut self, key: &egui::Key, pressed: &bool, modifiers: &egui::Modifiers) {
-        let en_cull_back_face = self.rasterizer.glsl_vars().en_cull_back_face;
-        let en_wire_frame = self.rasterizer.glsl_vars().en_wire_frame;
         if *pressed && modifiers.is_none() {
             self.redraw = true;
             match key {
@@ -96,8 +94,8 @@ impl SoftRenderer {
                 egui::Key::R => self.scene.comps.borrow_mut().camera.rotate_z(Angle::Ang(-10.0)),
                 egui::Key::G => self.scene.comps.borrow_mut().camera.move_forward(1.0),
                 egui::Key::A => self.scene.comps.borrow_mut().camera.move_forward(-1.0),
-                egui::Key::Z => self.rasterizer.enable_wire_frame(!en_wire_frame),
-                egui::Key::X => self.rasterizer.enable_cull_face(!en_cull_back_face),
+                egui::Key::Z => *self.rasterizer.wire_frame() = !*self.rasterizer.wire_frame(),
+                egui::Key::X => *self.rasterizer.cull_face() = !*self.rasterizer.cull_face(),
                 egui::Key::C => self.draw_color = !self.draw_color,
                 egui::Key::V => self.draw_depth = !self.draw_depth,
                 _ => self.redraw = false,
