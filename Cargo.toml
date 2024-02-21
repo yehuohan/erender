@@ -18,5 +18,7 @@ magx = {path = "crates/magx"}
 scene = {path = "crates/scene"}
 rasterizer = {path = "crates/rasterizer"}
 egui = "0.27.*"
-eframe = "0.27.*"
+eframe = {version="0.27.*", features=["wgpu"]}
 image = "0.23.12"
+env_logger = "0.11.*"
+log = "0.4.*"
