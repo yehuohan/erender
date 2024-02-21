@@ -17,6 +17,7 @@ members = [
 magx = {path = "crates/magx"}
 scene = {path = "crates/scene"}
 rasterizer = {path = "crates/rasterizer"}
-egui = "0.25.0"
-eframe = "0.25.0"
 image = "0.23.12"
+eframe = {version="0.24.*", features=["wgpu"]}
+env_logger = "0.11.*"
+log = "0.4.*"
