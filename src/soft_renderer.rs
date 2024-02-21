@@ -202,6 +202,7 @@ impl eframe::App for SoftRenderer {
     }
 }
 
+#[allow(dead_code)]
 pub fn run(sz: (u32, u32)) -> eframe::Result<()> {
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
