@@ -1,5 +1,5 @@
 
-Learning graphics renderer with Rust.
+Learn graphics renderer with Rust.
 
 ![erender](./erender.apng)
 

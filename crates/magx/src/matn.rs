@@ -234,8 +234,8 @@ macro_rules! impl_matn_inner {
 
 /// 基于宏实现matn的基本操作
 ///
-/// 矩阵基于行向量实现（和GLM的列向量实现有所不同），第1行到第4行向量的字段名
-/// 分别为‘r0 r1 r2 r3’。
+/// 不同于GLSL/GLM的列向量(col-major)矩阵，矩阵matn基于行向量(row-major)实现，因为matn并不需要放到GLSL中使用；
+/// 第1行到第4行向量的字段名分别为‘r0 r1 r2 r3’。
 ///
 /// - MatN: 矩阵名（matrix name）
 /// - VecN: 矩阵行向量类型（vector name）
