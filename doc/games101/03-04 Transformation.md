@@ -117,7 +117,7 @@ And transform all the objects with the camera.
 
 ### Orthographic(正交)
 
-In general, mapping a cuboid(长方体) [left, right] x [bottom x top] x [far x near] to the canonical cube [-1, 1]x3.
+In general, mapping a cuboid(长方体) [left, right] x [bottom, top] x [far, near] to the canonical cube [-1, 1]x3.
 
 Left and right are locate at axis x. Bottom and top are locate at axis y. Far and near are locate at axis z. Camera is look at from z to -z.
 
@@ -148,7 +148,7 @@ M_ortho = | 0        2/(t-b)  0        0 | | 0 1 0 -(t+b)/2 | = | 0        2/(t-
 
 > (x, y, z, 1) -> (xz, yz, z^2, z!=0), represent the same point(x, y, z) in 3D.
 
-Squish(抗压) frustum(锥体) to cuboid with matrix of transformation, then making orthographic projection.
+Squash(挤压) frustum(锥体) to cuboid with matrix of transformation, then making orthographic projection.
 
 ```
 x' = n/z * x
@@ -156,7 +156,7 @@ y' = n/z * y
 
                   | n  0  0       0 |   | 2n/(r-l)  0         -(r+l)/(r-l)  0         |
 M_persp = M_ortho*| 0  n  0       0 | = | 0         2n/(t-b)  -(t+b)/(r-b)  0         |
-                  | 0  0  (n+f)  -nf|   | 0         0         (n+f)/(n-f)   -2nf/(n-f)|
+                  | 0  0  (n+f)  -nf|   | 0         0          (n+f)/(n-f)  -2nf/(n-f)|
                   | 0  0  1       0 |   | 0         0                   1   0         |
 ```
 
